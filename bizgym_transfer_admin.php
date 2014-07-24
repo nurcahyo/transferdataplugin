@@ -30,7 +30,7 @@
 
 		if ($result['success']) {
 			$link = $result['data']['link'];
-			$title = 'BizGym 2.0 Migration';
+			$title = 'BizGym 2.0 Transfer';
 			
 			ob_start();
 			require 'email_template.php';
@@ -63,7 +63,7 @@
 		<?php echo "<h4>Please check & ensure these data below before you do the transfer</h4>"; ?>
 		<p><?php _e("Name: " ); ?><input readonly=readonly type="text" name="bm_name" value="<?php echo $name; ?>" size="20"></p>
 		<p><?php _e("Email: " ); ?><input type="text" name="bm_email" value="<?php echo $email; ?>" size="20"></p>
-		<p><?php _e("Choose the plan target for migrate: " ); ?>
+		<p><?php _e("Choose the plan target for transfer: " ); ?>
 			<select name="bm_plan">
 				<option value='starter'>Starter</option>
 				<option value='pro'>Pro</option>

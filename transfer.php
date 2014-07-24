@@ -8,16 +8,16 @@
     Author URI: http://www.bizgym.com
     */
 
-    function migration_actions() {
-    	add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "migration_admin");
+    function transfer_actions() {
+    	add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "transfer_admin");
     }
 
-    function migration_admin() {
-    	include('bizgym_migration_admin.php');
+    function transfer_admin() {
+    	include('bizgym_transfer_admin.php');
     }
 
     // create table
-    function migration_create_table(){
+    function transfer_create_table(){
         global $wpdb;
         global $charset_collate;
 
@@ -35,6 +35,6 @@
     }
 
     // hooks
-    register_activation_hook( __FILE__, 'migration_create_table');
-    add_action('admin_menu', 'migration_actions');
+    register_activation_hook( __FILE__, 'transfer_create_table');
+    add_action('admin_menu', 'transfer_actions');
 ?>
