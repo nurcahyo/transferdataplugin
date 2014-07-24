@@ -27,6 +27,7 @@
             id bigint(20) unsigned NOT NULL auto_increment,
             user_id bigint(20) unsigned NOT NULL default '0',
             email varchar(30) NOT NULL default '',
+            reference_link text NOT NULL default '',
             transfer_date datetime NOT NULL default '0000-00-00 00:00:00',
             PRIMARY KEY  (id)
         ) $charset_collate;";
@@ -34,7 +35,16 @@
         dbDelta($sql_create_table);
     }
 
+    // drop table
+    function transfer_drop_table() {
+        global $wpdb;
+
+        $sql = "DROP TABLE IF EXISTS {$wpdb->prefix}transfers";
+        $wpdb->query($sql);
+    }
+
     // hooks
     register_activation_hook( __FILE__, 'transfer_create_table');
+    register_deactivation_hook( __FILE__, 'transfer_drop_table');
     add_action('admin_menu', 'transfer_actions');
 ?>

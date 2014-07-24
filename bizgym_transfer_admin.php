@@ -39,7 +39,11 @@
 			$sent = wp_mail( $email, $title, $body );
 
 			if ($sent) { //if sent
-				$rows_affected = $wpdb->insert( $wpdb->prefix . 'transfers', array( 'user_id' => $user->ID, 'email' => $user->user_email, 'transfer_date' => date('Y-m-d H:i:s') ) );
+				$rows_affected = $wpdb->insert( $wpdb->prefix . 'transfers', array( 
+					'user_id' => $user->ID, 
+					'email' => $user->user_email, 
+					'reference_link' => $link,
+					'transfer_date' => date('Y-m-d H:i:s') ) );
 
 				if ($rows_affected > 0) {
 					$message = 'Transfer Success. Please check your email for the next process';
