@@ -1,6 +1,6 @@
 <?php
-	
-	global $wpdb;	
+
+	global $wpdb;
 	$name = $email = $message = '';
 	$plan = 'starter';
 
@@ -22,7 +22,13 @@
 		
 		$pass = $user->user_pass;
 
-		$url = "http://bizgym.dev/transfer-old-user?current_plan={$plan}&email={$email}&encrypted_password={$pass}";		
+		$params = http_build_query(array(
+			'current_plan' => $plan,
+			'email' => $email,
+			'encrypted_password' => $pass
+			));
+
+		$url = TRANSFER_ENDPOINT . '?' . $params;
 
 		$result = json_decode(file_get_contents($url), true);
 
