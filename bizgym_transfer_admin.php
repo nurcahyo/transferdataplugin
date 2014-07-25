@@ -18,7 +18,7 @@
 		$plan = $_REQUEST['bm_plan'];
 		$title = 'BizGym 2.0 Transfer';
 
-		$user = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}users WHERE user_email = '{$email}'", OBJECT );		
+		$user = get_user_by_field('user_email', $email);
 		$pass = $user->user_pass;
 
 		// choose template
@@ -35,13 +35,13 @@
 
 		if($transfer) { // resend
 			$link = $transfer->reference_link;
-			send_email($email, $title, $link, $template);
+			send_email($email, $title, $link, $user->display_name, $template);
 			$message = 'Resend Success';
 		} else {
 			$params = http_build_query(array(
-			'current_plan' => $plan,
-			'email' => $email,
-			'encrypted_password' => $pass
+				'current_plan' => $plan,
+				'email' => $email,
+				'encrypted_password' => $pass
 			));
 
 			$url = TRANSFER_ENDPOINT . '?' . $params;
@@ -58,7 +58,7 @@
 						'status' => 'failed',
 						'transfer_date' => date('Y-m-d H:i:s') ) );
 
-				$sent = send_email($email, $title, $link, $template);
+				$sent = send_email($email, $title, $link, $user->display_name, $template);
 				if ($sent) { //if sent
 					// update failed to success
 					$rows_affected = update_status_transfers($wpdb->insert_id, 'sent');
@@ -71,10 +71,11 @@
 	} else if ($_REQUEST['resend']) {
 		$template = 'click_email_template.php';
 		$transfer = get_transfer_by_field('id', $_REQUEST['resend_id']);
+		$user = get_user_by_field('ID', $transfer->user_id);
 		$email = $transfer->email;
 		$title = 'BizGym 2.0 Transfer';
 		$link = $transfer->reference_link;
-		$sent = send_email($email, $title, $link, $template);
+		$sent = send_email($email, $title, $link, $user->display_name, $template);
 
 		if ($sent) {
 			update_status_transfers($transfer->id, 'sent');
@@ -82,15 +83,16 @@
 		}
 	}
 
-	function send_email($email, $title, $link, $template) {
+	function send_email($email, $title, $link, $name, $template) {
 		$link = $link;
+		$name = $name;
 
 		ob_start();
 		require $template;
 		$body = ob_get_clean();
 		$sent = wp_mail( $email, $title, $body, array('Content-Type' => 'text/html') );
 
-		return !$sent;
+		return $sent;
 	}
 
 	function update_status_transfers($id, $status) {
@@ -107,10 +109,14 @@
 
 	function get_transfer_by_field($field = 'id', $value = '') {
 		global $wpdb;
-
-		$query = "SELECT * FROM {$wpdb->prefix}transfers WHERE {$field} = '{$value}'";
 		$row = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}transfers WHERE {$field} = '{$value}'", OBJECT);
 		return $row;
+	}
+
+	function get_user_by_field($field = 'id', $value = '') {
+		global $wpdb;
+		$row = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}users WHERE {$field} = '{$value}'", OBJECT);
+		return $row;	
 	}
 ?>
 
