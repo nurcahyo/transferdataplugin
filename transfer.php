@@ -8,7 +8,7 @@
     Author URI: http://www.bizgym.com
     */
 
-    define( 'TRANSFER_ENDPOINT', 'http://bizgym.dev/transfer-old-user' );
+    define( 'TRANSFER_ENDPOINT', 'https://dev.bizgym.com/transfer-old-user' );
 
     function transfer_actions() {
     	add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "transfer_admin");
@@ -30,6 +30,7 @@
             user_id bigint(20) unsigned NOT NULL default '0',
             email varchar(30) NOT NULL default '',
             reference_link text NOT NULL default '',
+            status varchar(30) NOT NULL default '',
             transfer_date datetime NOT NULL default '0000-00-00 00:00:00',
             PRIMARY KEY  (id)
         ) $charset_collate;";
@@ -50,7 +51,7 @@
     {
         add_rewrite_endpoint('sup3rs3cr3t', EP_PAGES);
     }
-    add_action( 'init', 'transfer_route' );
+    add_action( 'wp-loaded', 'transfer_route' );
 
     function transfer_action()
     {
@@ -126,7 +127,7 @@
             require 'email_template.php';
             $body = ob_get_clean();
 
-            $sent = wp_mail( $email, $title, $body );
+            $sent = wp_mail( $email, $title, $body, array('Content-Type' => 'text/html') );
 
             if ($sent) { //if sent
                 $rows_affected = $wpdb->insert( $wpdb->prefix . 'transfers', array( 

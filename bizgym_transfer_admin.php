@@ -3,7 +3,6 @@
 	global $wpdb;
 	$name = $email = $message = '';
 	$plan = 'starter';
-
 	$user = wp_get_current_user();
 	
 	if ($user) {
@@ -17,57 +16,111 @@
 
 		$email = $_REQUEST['bm_email'];
 		$plan = $_REQUEST['bm_plan'];
+		$title = 'BizGym 2.0 Transfer';
 
-		$user = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}users WHERE user_email = '{$email}'", OBJECT );
-		
+		$user = $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}users WHERE user_email = '{$email}'", OBJECT );		
 		$pass = $user->user_pass;
 
-		$params = http_build_query(array(
+		// choose template
+		switch ($_REQUEST['bm_template']) {
+			case 'click':
+				$template = 'click_email_template.php';
+				break;
+			case 'cron':
+				$template = 'click_cron_template.php';
+				break;
+			}
+
+		$transfer = get_transfer_by_field('email', $email);
+
+		if($transfer) { // resend
+			$link = $transfer->reference_link;
+			send_email($email, $title, $link, $template);
+			$message = 'Resend Success';
+		} else {
+			$params = http_build_query(array(
 			'current_plan' => $plan,
 			'email' => $email,
 			'encrypted_password' => $pass
 			));
 
-		$url = TRANSFER_ENDPOINT . '?' . $params;
+			$url = TRANSFER_ENDPOINT . '?' . $params;
+			$result = json_decode(file_get_contents($url), true);
+			$message = "Error when processing transfer";
 
-		$result = json_decode(file_get_contents($url), true);
+			if ($result['success']) {
+				$link = $result['data']['link'];
 
-		$message = "Error when processing transfer";
-
-		if ($result['success']) {
-			$link = $result['data']['link'];
-			$title = 'BizGym 2.0 Transfer';
-			
-			ob_start();
-			require 'email_template.php';
-			$body = ob_get_clean();
-
-			$sent = wp_mail( $email, $title, $body );
-
-			if ($sent) { //if sent
 				$rows_affected = $wpdb->insert( $wpdb->prefix . 'transfers', array( 
-					'user_id' => $user->ID, 
-					'email' => $user->user_email, 
-					'reference_link' => $link,
-					'transfer_date' => date('Y-m-d H:i:s') ) );
+						'user_id' => $user->ID, 
+						'email' => $user->user_email, 
+						'reference_link' => $link,
+						'status' => 'failed',
+						'transfer_date' => date('Y-m-d H:i:s') ) );
 
-				if ($rows_affected > 0) {
-					$message = 'Transfer Success. Please check your email for the next process';
-				}	
-			}			
+				$sent = send_email($email, $title, $link, $template);
+				if ($sent) { //if sent
+					// update failed to success
+					$rows_affected = update_status_transfers($wpdb->insert_id, 'sent');
+					if ($rows_affected > 0) {
+						$message = 'Transfer Success. Please check your email for the next process';
+					}	
+				}
+			}
 		}
+	} else if ($_REQUEST['resend']) {
+		$template = 'click_email_template.php';
+		$transfer = get_transfer_by_field('id', $_REQUEST['resend_id']);
+		$email = $transfer->email;
+		$title = 'BizGym 2.0 Transfer';
+		$link = $transfer->reference_link;
+		$sent = send_email($email, $title, $link, $template);
+
+		if ($sent) {
+			update_status_transfers($transfer->id, 'sent');
+			$message = 'Resend Success';
+		}
+	}
+
+	function send_email($email, $title, $link, $template) {
+		$link = $link;
+
+		ob_start();
+		require $template;
+		$body = ob_get_clean();
+		$sent = wp_mail( $email, $title, $body, array('Content-Type' => 'text/html') );
+
+		return !$sent;
+	}
+
+	function update_status_transfers($id, $status) {
+		global $wpdb;
+		$rows_affected = $wpdb->update( $wpdb->prefix . 'transfers', 
+			array(
+				'status' => $status,
+				'transfer_date' => date('Y-m-d H:i:s')
+				), 
+			array('id' => $id )
+		);
+		return $rows_affected;
+	}
+
+	function get_transfer_by_field($field = 'id', $value = '') {
+		global $wpdb;
+
+		$query = "SELECT * FROM {$wpdb->prefix}transfers WHERE {$field} = '{$value}'";
+		$row = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}transfers WHERE {$field} = '{$value}'", OBJECT);
+		return $row;
 	}
 ?>
 
-
 <div class="wrap">
 	<?php echo "<h2>BizGym 2.0 Transfer</h2>"; ?>
-
 	<?php if ($message != '') { ?>
 	<?php echo "<h3>{$message}</h3>"; ?>
 	<?php  } ?>
 
-	<form name="transfer" method="GET" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
+	<form name="transfer" method="POST" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
 		<input type="hidden" name="page" value="BizGym_Transfer">
 		<input type="hidden" name="bm_hidden" value="Y">
 		<?php echo "<h4>Please check & ensure these data below before you do the transfer</h4>"; ?>
@@ -79,6 +132,13 @@
 				<option value='pro'>Pro</option>
 				<option value='enterprise'>Free</option>
 			</select>
+		</p>
+		<p><?php _e("Choose email template: " ); ?>
+			<select name="bm_template">
+				<option value='click'>Click Scenario</option>
+				<option value='cron'>Cron Scenario</option>
+			</select>
+		</p>
 		<p class="submit">
 			<input type="submit" name="Submit" value="Start Transfer!" />
 		</p>
@@ -90,6 +150,7 @@
 			<tr>
 				<td>Email</td>
 				<td>Transfer Date</td>
+				<td>Action</td>
 			</tr>
 		</thead>
 		<tbody>
@@ -97,6 +158,7 @@
 			<tr>
 				<td><?php echo $transfer->email ?></td>
 				<td><?php echo date('F d, Y - H:i:s', strtotime($transfer->transfer_date)) ?></td>
+				<td><a href="?&page=BizGym_Transfer&resend=true&resend_id=<?php echo $transfer->id ?>">Resend</td>
 			</tr>
 			<?php } ?>
 		</tbody>
