@@ -27,7 +27,7 @@
 				$template = 'click_email_template.php';
 				break;
 			case 'cron':
-				$template = 'click_cron_template.php';
+				$template = 'cron_email_template.php';
 				break;
 			}
 
