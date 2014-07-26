@@ -8,7 +8,7 @@
     Author URI: http://www.bizgym.com
     */
 
-    define( 'TRANSFER_ENDPOINT', 'http://bizgym.dev/transfer-old-user' );
+    define( 'TRANSFER_ENDPOINT', 'https://dev.bizgym.com/transfer-old-user' );
 
     function transfer_actions() {
     	add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "transfer_admin");
