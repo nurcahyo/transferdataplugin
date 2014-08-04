@@ -187,10 +187,15 @@
         file_get_contents('/send-batch');
     }
 
+    function transfer_remove_cron() {
+        wp_clear_scheduled_hook('hourly_transfer');
+    }
+
     // hooks
     register_activation_hook( __FILE__, 'transfer_create_table');
     register_activation_hook( __FILE__, 'transfer_cron');
     register_deactivation_hook( __FILE__, 'transfer_drop_table');
+    register_deactivation_hook( __FILE__, 'transfer_remove_cron');
     add_action('admin_menu', 'transfer_actions');
     add_action('hourly_transfer', 'cron_transfer');
 ?>
