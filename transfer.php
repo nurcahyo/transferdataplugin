@@ -7,17 +7,15 @@
     Version: 1.0
     Author URI: http://www.bizgym.com
     */
-
     require (__DIR__.DIRECTORY_SEPARATOR.'clientscript.php');
-
-    define( 'TRANSFER_ENDPOINT', 'https://dev.bizgym.com/transfer-old-user' );
+    define( 'TRANSFER_ENDPOINT', 'https://bizgym.com/transfer-old-user' );
 
     function transfer_actions() {
-    	add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "transfer_admin");
+        add_options_page("BizGym 2.0 Transfer", "BizGym 2.0 Transfer", 1, "BizGym_Transfer", "transfer_admin");
     }
 
     function transfer_admin() {
-    	include('bizgym_transfer_admin.php');
+        include('bizgym_transfer_admin.php');
     }
 
     // create table
@@ -57,10 +55,14 @@
 
     function transfer_action()
     {
+        require_once 'transfer_helper.php';
         global $wpdb;
 
-        $path = trim(rtrim($_SERVER['PATH_INFO'], '/'), '/');
-        $whiteList = array('autologin', 'send-batch');
+        $paths = trim(rtrim($_SERVER['REQUEST_URI'], '/'), '/');
+        $paths = explode('?', $paths);
+        $path = $paths[0];
+
+        $whiteList = array('autologin', 'send-batch', 'bg-upgrade');
 
         if ( in_array($path, $whiteList)) {
 
@@ -84,6 +86,27 @@
                         die('Invalid hash');
                     }
                     exit();
+                    break;
+                case 'bg-upgrade':
+                    global $current_user;
+                    get_currentuserinfo();
+                    $email = $current_user->user_email;
+                    $password = $current_user->user_pass;
+                    $message = "Error when processing transfer";
+
+                    if(! ($email && $password)) {
+                        $message = 'Email & Password must be provided';
+                    } else {
+                        $user = get_user_by( 'email', $email );
+                        if ( !is_wp_error( $user ) && $user->user_pass == $password) {
+                            $plan = 'starter';
+                            $transfer = get_transfer_by_field('email', $email);
+                            $title = 'BizGym 2.0 Transfer';
+                            $template = 'click_email_template.php';
+                            $message = transfer_user($transfer, $email, $plan, $title, $user, $password, $template);
+                        }
+                    }
+                    die(header('Location: /'));
                     break;
                 case 'send-batch':
                     $transfers = $wpdb->get_results("SELECT email FROM {$wpdb->prefix}transfers");
@@ -129,7 +152,7 @@
             require 'email_template.php';
             $body = ob_get_clean();
 
-            $sent = wp_mail( $email, $title, $body, array('Content-Type' => 'text/html') );
+            $sent = wp_mail( $email, $title, $body, 'Content-Type: text/html; charset=UTF-8' );
 
             if ($sent) { //if sent
                 $rows_affected = $wpdb->insert( $wpdb->prefix . 'transfers', array( 
