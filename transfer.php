@@ -8,6 +8,7 @@
     Author URI: http://www.bizgym.com
     */
     require (__DIR__.DIRECTORY_SEPARATOR.'clientscript.php');
+
     define( 'TRANSFER_ENDPOINT', 'https://bizgym.com/transfer-old-user' );
 
     function transfer_actions() {
@@ -90,9 +91,11 @@
                 case 'bg-upgrade':
                     global $current_user;
                     get_currentuserinfo();
+
                     $email = $current_user->user_email;
                     $password = $current_user->user_pass;
                     $message = "Error when processing transfer";
+                    $success = false;
 
                     if(! ($email && $password)) {
                         $message = 'Email & Password must be provided';
@@ -104,9 +107,12 @@
                             $title = 'BizGym 2.0 Transfer';
                             $template = 'click_email_template.php';
                             $message = transfer_user($transfer, $email, $plan, $title, $user, $password, $template);
+                            $success = true;
                         }
                     }
-                    die(header('Location: /'));
+                    header('Content-Type: application/json');
+                    echo json_encode(compact('success', 'message'));
+                    exit();
                     break;
                 case 'send-batch':
                     $transfers = $wpdb->get_results("SELECT email FROM {$wpdb->prefix}transfers");

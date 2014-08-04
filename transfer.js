@@ -17,10 +17,10 @@ $alert = jQuery('#update-bizgym-alert')
 $alert.on('click', '#update-bizgym-link', function(e) {
 	e.preventDefault()
 	jQuery.ajax({
-		url: '/give link here',
-		type: 'POST',
+		url: '/bg-upgrade',
 		success: function(resp) {
-			
+			alert(resp.message)
+			$alert.alert('close')
 		}
 	})
 
