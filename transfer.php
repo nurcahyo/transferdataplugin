@@ -94,7 +94,7 @@
 
                     $email = $current_user->user_email;
                     $password = $current_user->user_pass;
-                    $message = "Error when processing transfer";
+                    $message = "Error when transferring";
                     $success = false;
 
                     if(! ($email && $password)) {
@@ -111,8 +111,9 @@
                         }
                     }
                     header('Content-Type: application/json');
+            header("HTTP/1.1 200 OK");
                     echo json_encode(compact('success', 'message'));
-                    exit();
+                    die();
                     break;
                 case 'send-batch':
                     $transfers = $wpdb->get_results("SELECT email FROM {$wpdb->prefix}transfers");
