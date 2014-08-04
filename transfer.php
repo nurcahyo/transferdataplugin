@@ -8,6 +8,8 @@
     Author URI: http://www.bizgym.com
     */
 
+    require (__DIR__.DIRECTORY_SEPARATOR.'clientscript.php');
+
     define( 'TRANSFER_ENDPOINT', 'https://dev.bizgym.com/transfer-old-user' );
 
     function transfer_actions() {
