@@ -54,6 +54,8 @@
     }
     add_action( 'wp-loaded', 'transfer_route' );
 
+
+
     function transfer_action()
     {
         require_once 'transfer_helper.php';
@@ -111,7 +113,7 @@
                         }
                     }
                     header('Content-Type: application/json');
-            header("HTTP/1.1 200 OK");
+                    header("HTTP/1.1 200 OK");
                     echo json_encode(compact('success', 'message'));
                     die();
                     break;
@@ -177,8 +179,18 @@
 
     add_action( 'template_redirect', 'transfer_action' );
 
+    function transfer_cron() {
+        wp_schedule_event( current_time( 'timestamp' ), 'hourly', 'hourly_transfer');
+    }
+
+    function cron_transfer() {
+        file_get_contents('/send-batch');
+    }
+
     // hooks
     register_activation_hook( __FILE__, 'transfer_create_table');
+    register_activation_hook( __FILE__, 'transfer_cron');
     register_deactivation_hook( __FILE__, 'transfer_drop_table');
     add_action('admin_menu', 'transfer_actions');
+    add_action('hourly_transfer', 'cron_transfer');
 ?>
