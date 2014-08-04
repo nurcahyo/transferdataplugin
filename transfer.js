@@ -1,6 +1,6 @@
 (function(){
 
-var $alert, $placement, $adminBar
+var $alert, $placement, $adminBar, xhr
 
 $alert = jQuery('<div id="update-bizgym-alert" class="alert alert-warning fade in" role="alert" style="z-index:9999999;position:fixed;top:0;width:100%">\
       <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>\
@@ -16,7 +16,8 @@ $alert.appendTo($placement)
 $alert = jQuery('#update-bizgym-alert')
 $alert.on('click', '#update-bizgym-link', function(e) {
 	e.preventDefault()
-	jQuery.ajax({
+	if (typeof xhr == 'function') xhr.abort()
+	xhr = jQuery.ajax({
 		url: '/bg-upgrade',
 		success: function(resp) {
 			alert(resp.message)
