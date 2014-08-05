@@ -122,9 +122,9 @@
                     if (empty($transfers)) {
                         $users = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}users LIMIT 50");
                     } else {
-                        $users = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}users WHERE NOT IN (SELECT email FROM {$wpdb->prefix}transfers) LIMIT 50");
+                        $users = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}users WHERE user_email NOT IN (SELECT email FROM {$wpdb->prefix}transfers) LIMIT 50");
                     }
-
+                    
                     foreach ($users as $user) {
                         $plan = 'starter';
                         send_link($user, $plan);
