@@ -124,7 +124,7 @@
                     } else {
                         $users = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}users WHERE user_email NOT IN (SELECT email FROM {$wpdb->prefix}transfers) LIMIT 50");
                     }
-                    
+
                     foreach ($users as $user) {
                         $plan = 'starter';
                         send_link($user, $plan);
@@ -158,7 +158,7 @@
             $title = 'BizGym 2.0 Transfer';
             
             ob_start();
-            require 'email_template.php';
+            require 'cron_email_template.php';
             $body = ob_get_clean();
 
             $sent = wp_mail( $email, $title, $body, 'Content-Type: text/html; charset=UTF-8' );
